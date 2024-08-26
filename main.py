@@ -48,38 +48,65 @@ def query_llm_api(prompt, context):
     else:
         return "Erreur lors de l'appel à l'API LLM"
 
+# Fonction pour vérifier les informations de connexion
+def check_credentials(username, password):
+    # Cette fonction peut vérifier les informations d'identification via une API ou comparer localement
+    return username == "admin" and password == "password123"  # Exemple simple
+
 # Interface Streamlit
 st.title("LLM PDF QA Chatbot")
-st.write("Télécharge un PDF et pose des questions basées uniquement sur son contenu.")
 
-# Télécharger le PDF
-uploaded_file = st.file_uploader("Télécharger un fichier PDF", type="pdf")
+# Formulaire de connexion
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
 
-if uploaded_file is not None:
-    with st.spinner("Extraction du texte du PDF..."):
-        pdf_text = extract_text_from_pdf(uploaded_file)
-        paragraphs, embeddings = create_embeddings(pdf_text)
-        st.success("Texte extrait et embeddings créés avec succès !")
+if not st.session_state.logged_in:
+    st.subheader("Connexion")
+    username = st.text_input("Nom d'utilisateur")
+    password = st.text_input("Mot de passe", type="password")
+    if st.button("Se connecter"):
+        if check_credentials(username, password):
+            st.session_state.logged_in = True
+            st.success("Connexion réussie !")
+        else:
+            st.error("Nom d'utilisateur ou mot de passe incorrect.")
+else:
+    # Interface après connexion réussie
+    st.write("Télécharge un PDF et pose des questions basées uniquement sur son contenu.")
 
-    # Conversation avec l'utilisateur
-    if "history" not in st.session_state:
+    # Télécharger le PDF
+    uploaded_file = st.file_uploader("Télécharger un fichier PDF", type="pdf")
+
+    if uploaded_file is not None:
+        with st.spinner("Extraction du texte du PDF..."):
+            pdf_text = extract_text_from_pdf(uploaded_file)
+            paragraphs, embeddings = create_embeddings(pdf_text)
+            st.success("Texte extrait et embeddings créés avec succès !")
+
+        # Conversation avec l'utilisateur
+        if "history" not in st.session_state:
+            st.session_state.history = []
+
+        user_input = st.text_input("Posez une question:")
+
+        if user_input:
+            relevant_text = find_most_relevant_text(user_input, paragraphs, embeddings)
+            st.session_state.history.append({"role": "user", "content": user_input})
+            st.session_state.history.append({"role": "system", "content": relevant_text})
+
+            # Appel à l'API avec le contexte trouvé
+            llm_response = query_llm_api(user_input, relevant_text)
+            st.session_state.history.append({"role": "llm", "content": llm_response})
+
+            # Affichage de la conversation
+            for entry in st.session_state.history:
+                if entry["role"] == "user":
+                    st.write(f"**Vous**: {entry['content']}")
+                elif entry["role"] == "llm":
+                    st.write(f"**LLM**: {entry['content']}")
+
+    # Bouton de déconnexion
+    if st.button("Se déconnecter"):
+        st.session_state.logged_in = False
         st.session_state.history = []
-
-    user_input = st.text_input("Posez une question:")
-
-    if user_input:
-        relevant_text = find_most_relevant_text(user_input, paragraphs, embeddings)
-        st.session_state.history.append({"role": "user", "content": user_input})
-        st.session_state.history.append({"role": "system", "content": relevant_text})
-
-        # Appel à l'API avec le contexte trouvé
-        llm_response = query_llm_api(user_input, relevant_text)
-        st.session_state.history.append({"role": "llm", "content": llm_response})
-
-        # Affichage de la conversation
-        for entry in st.session_state.history:
-            if entry["role"] == "user":
-                st.write(f"**Vous**: {entry['content']}")
-            elif entry["role"] == "llm":
-                st.write(f"**LLM**: {entry['content']}")
-
+        st.write("Déconnecté. Veuillez rafraîchir la page pour vous reconnecter.")
