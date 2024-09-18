@@ -25,6 +25,7 @@ httptools==0.6.1
 httpx==0.27.0
 huggingface-hub==0.24.6
 idna==3.7
+iniconfig==2.0.0
 itsdangerous==2.2.0
 Jinja2==3.1.4
 joblib==1.4.2
@@ -54,6 +55,7 @@ packaging==24.1
 pandas==2.2.2
 passlib==1.7.4
 pillow==10.4.0
+pluggy==1.5.0
 protobuf==5.27.3
 pyarrow==17.0.0
 pyasn1==0.6.0
@@ -64,6 +66,7 @@ pydantic_core==2.20.1
 pydeck==0.9.1
 Pygments==2.18.0
 PyPDF2==3.0.1
+pytest==8.3.3
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 python-jose==3.3.0
@@ -91,6 +94,7 @@ tenacity==8.5.0
 threadpoolctl==3.5.0
 tokenizers==0.19.1
 toml==0.10.2
+tomli==2.0.1
 torch==2.4.0
 tornado==6.4.1
 tqdm==4.66.5
